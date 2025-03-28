@@ -1,0 +1,62 @@
+user_df['观看作品数'] = df.groupby('uid').agg({'item_id': pd.Series.nunique})
+user_df['观看作品平均时长'] = df.groupby('uid')['duration_time'].mean()
+user_df['观看配乐数'] = df.groupby('uid').agg({'music_id': pd.Series.nunique})
+user_df['完整观看数'] = df.groupby('uid')['finish'].sum()
+user_df['去过的城市数'] = df.groupby('uid').agg({'user_city': pd.Series.nunique})
+user_df['观看作品城市数'] = df.groupby('uid').agg({'item_city': pd.Series.nunique})
+
+
+#数据可视化
+max_views = user_df['浏览量'].max()
+bins = np.arange(0, max_views + 100, 100)
+labels = [f'({bins[i]}, {bins[i+1]}]' for i in range(len(bins)-1)]
+
+
+user_df['浏览数分组'] = pd.cut(
+    user_df['浏览量'],
+    bins=bins,
+    labels=labels,
+    right=False
+)
+
+
+group_counts = user_df['浏览数分组'].value_counts().sort_index()
+
+
+plt.figure(figsize=(16, 12))
+
+
+colors = plt.cm.tab20c(np.linspace(0, 1, len(group_counts)))
+
+
+wedges, texts, autotexts = plt.pie(
+    group_counts,
+    labels=group_counts.index.tolist(),
+    colors=colors,
+    autopct='%1.1f%%',
+    startangle=90,
+    pctdistance=0.8,
+    labeldistance=1.05,
+    wedgeprops={'linewidth': 1, 'edgecolor': 'white'},
+    textprops={'fontsize': 10, 'color': 'black'}
+)
+
+plt.title(
+    "用户浏览量分布（按100间隔分组）",
+    fontsize=18,
+    pad=20,
+    fontweight='bold'
+)
+
+plt.legend(
+    wedges,
+    group_counts.index.tolist(),
+    title="浏览量区间",
+    loc="center left",
+    bbox_to_anchor=(1, 0.5),
+    fontsize=10
+)
+
+plt.tight_layout()
+plt.savefig('user_views_pie.png', dpi=300, bbox_inches='tight')
+plt.show()
